@@ -1,5 +1,6 @@
 public class Reserva {
     private int idReserva;
+    private static int globalIdReserva = 0;
     private String fecha;
     private int horaInicio;
     private int horaFin;
@@ -7,8 +8,8 @@ public class Reserva {
     private Salon salon;
     private Profesor profesor;
 
-    public Reserva(int idReserva, String fecha,int horaInicio, int horaFin, int asistentes, Salon salon, Profesor profesor) {
-        this.idReserva = idReserva;
+    public Reserva(String fecha,int horaInicio, int horaFin, int asistentes, Salon salon, Profesor profesor) {
+        this.idReserva = ++globalIdReserva;
         this.fecha = fecha;
         this.horaInicio = horaInicio;
         this.horaFin = horaFin;
