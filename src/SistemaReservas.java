@@ -13,7 +13,7 @@ public class SistemaReservas {
     }
     public void registrarSalon(String codigo,int capacidad, String ubicacion) throws SalonDuplicadoException, CapacidadInvalidaException {
         for(Salon salon:salones){
-            if(salon==null) break;
+            if(salon==null) continue;
 
             if(salon.getCodigo().equals(codigo)){
                 throw  new SalonDuplicadoException("Este salon ya existe");
@@ -31,7 +31,7 @@ public class SistemaReservas {
     }
     public void registrarProfesor(String id, String nombre, String correo)throws ProfesorDuplicadoException, CapacidadInvalidaException {
         for(Profesor profesor:profesores){
-            if(profesor==null) break;
+            if(profesor==null) continue;
             if(profesor.getId().equals(id)){
                 throw new ProfesorDuplicadoException("Profesor ya existe");
             }
@@ -52,7 +52,7 @@ public class SistemaReservas {
         int iprofesor = 0;
         int ireserva = 0;
         for(int i=0;i<salones.length;i++) {
-            if (salones[i] == null) break;
+            if (salones[i] == null) continue;
             if (salones[i].getCodigo().equals(codigoSalon)) {
                 existe = true;
                 isalon = i;
@@ -63,7 +63,7 @@ public class SistemaReservas {
         existe = false;
 
         for(int i=0;i<profesores.length;i++) {
-            if (profesores[i] == null) break;
+            if (profesores[i] == null) continue;
             if (profesores[i].getId().equals(idProfesor)) {
                 existe = true;
                 iprofesor = i;
@@ -78,16 +78,68 @@ public class SistemaReservas {
         for(int i=0;i<reservas.length;i++) {
             if(reservas[i]==null) {
                 reservas[i] = new Reserva(fecha, horaInicio, horaFin, asistentes, salones[isalon], profesores[iprofesor]);
+                for(Reserva reserva:reservas){
+                    if(reserva==null) continue;
+                    if(reserva.seCruzaCon(reservas[ireserva])) throw new ReservaSolapadaException("La reserva se cruza con otra reserva");
+                }
+                if(salones[isalon].getCapacidad()<reservas[i].getAsistentes())throw  new CapacidadInvalidaException("los asistentes no pueden superar la capacidad del salon");
                 ireserva = i;
                 break;
             }
         }
-        for(Reserva reserva:reservas){
-            if(reserva==null) break;
-            if(reserva.seCruzaCon(reservas[ireserva])) throw new ReservaSolapadaException("La reserva se cruza con otra reserva");
-        }
-        return ireserva;
 
+        return reservas[ireserva-1].getIdReserva();
     }
 
+    public void cancelarReserva(int idReserva)throws ReservaNoExisteException {
+        for(int i=0;i<reservas.length;i++) {
+            if(reservas[i]==null) continue;
+            if(reservas[i].getIdReserva()==idReserva){
+                reservas[i]=null;
+                return;
+            }
+        }
+        throw new ReservaNoExisteException("ninguna reserva cuenta con el codigo ingresado");
+    }
+
+    public void listarReservasPorFecha(String fecha){
+        for(Reserva reserva:reservas) {
+            if(reserva==null) continue;
+            if(reserva.getFecha().equals(fecha)) IO.println(reserva.toString());
+        }
+    }
+    public void mostrarSalonesDisponibles(String fecha, int horaInicio, int horaFin) {
+        boolean existe;
+        for (Salon salon : salones) {
+            if (salon == null) continue;
+            boolean ocupado = false;
+            for (Reserva reserva : reservas) {
+                if (reserva == null) continue;
+                if (reserva.getFecha().equals(fecha) && !(horaFin <= reserva.getHoraInicio() || horaInicio >= reserva.getHoraFin())) {
+                    ocupado = true;
+                    break;
+                }
+            }
+
+            if (!ocupado) {
+                IO.println(salon.toString());
+            }
+        }
+    }
+    private Salon buscarSalonPorCodigo(String idSalon) {
+        for (Salon salon : salones) {
+            if (salon == null) continue;
+            if(salon.getCodigo().equals(idSalon)) return salon;
+        }
+        IO.println("no se encontro el salon");
+        return null;
+    }
+    private Profesor buscarProfesorPorId(String idProfesor) {
+        for (Profesor profesor : profesores) {
+            if(profesor==null) continue;
+            if(profesor.getId().equals(idProfesor)) return profesor;
+        }
+        IO.println("no se encontro el profesor");
+        return null;
+    }
 }
