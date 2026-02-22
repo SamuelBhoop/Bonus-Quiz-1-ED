@@ -1,205 +1,198 @@
-import java.util.Scanner;
 import excepciones.*;
+import java.util.Scanner;
 
 public class Main {
 
     public static void main(String[] args) {
 
         Scanner sc = new Scanner(System.in);
-        SistemaReservas sistema = new SistemaReservas();
+        SistemaReservas sistema = new SistemaReservas(50, 50, 50);
 
-        int opcion = 0;
+        int opcion;
 
-        while (opcion != 7) {
-
+        do {
             System.out.println("\n===== SISTEMA DE RESERVAS =====");
-            System.out.println("1. Registrar salon");
+            System.out.println("1. Registrar salón");
             System.out.println("2. Registrar profesor");
             System.out.println("3. Crear reserva");
             System.out.println("4. Cancelar reserva");
             System.out.println("5. Listar reservas por fecha");
             System.out.println("6. Mostrar salones disponibles");
-            System.out.println("7. Salir");
-            System.out.print("Seleccione una opcion: ");
+            System.out.println("7. Buscar salón por código");
+            System.out.println("8. Buscar profesor por ID");
+            System.out.println("0. Salir");
+            System.out.print("Seleccione una opción: ");
 
             opcion = sc.nextInt();
             sc.nextLine();
 
-            if (opcion == 1) {
+            switch (opcion) {
 
-                try {
+                case 1:
+                    try {
+                        System.out.print("Código del salón: ");
+                        String codigo = sc.nextLine();
 
-                    System.out.print("Codigo del salon: ");
-                    String codigo = sc.nextLine();
+                        System.out.print("Capacidad: ");
+                        int capacidad = sc.nextInt();
+                        sc.nextLine();
 
-                    System.out.print("Capacidad: ");
-                    int capacidad = sc.nextInt();
-                    sc.nextLine();
+                        System.out.print("Ubicación: ");
+                        String ubicacion = sc.nextLine();
 
-                    System.out.print("Ubicacion: ");
-                    String ubicacion = sc.nextLine();
+                        sistema.registrarSalon(codigo, capacidad, ubicacion);
+                        System.out.println("Salón registrado correctamente.");
 
-                    sistema.registrarSalon(codigo, capacidad, ubicacion);
+                    } catch (SalonDuplicadoException e) {
+                        System.out.println("Ya existe un salón con ese código.");
+                    } catch (CupoMaximoException e) {
+                        System.out.println("No se pueden registrar más salones.");
+                    }
+                    break;
 
-                    System.out.println("Salon registrado correctamente");
+                case 2:
+                    try {
+                        System.out.print("ID del profesor: ");
+                        String id = sc.nextLine();
 
-                } catch (Exception e) {
+                        System.out.print("Nombre: ");
+                        String nombre = sc.nextLine();
 
-                    System.out.println("Error: " + e.getMessage());
-                }
+                        System.out.print("Correo: ");
+                        String correo = sc.nextLine();
 
-            }
-            else if (opcion == 2) {
+                        sistema.registrarProfesor(id, nombre, correo);
+                        System.out.println("Profesor registrado correctamente.");
 
-                try {
+                    } catch (ProfesorDuplicadoException e) {
+                        System.out.println("Ese profesor ya está registrado.");
+                    } catch (CupoMaximoException e) {
+                        System.out.println("No se pueden registrar más profesores.");
+                    }
+                    break;
 
-                    System.out.print("ID del profesor: ");
-                    String id = sc.nextLine();
+                case 3:
+                    try {
+                        System.out.print("Fecha (YYYY-MM-DD): ");
+                        String fecha = sc.nextLine();
 
-                    System.out.print("Nombre: ");
-                    String nombre = sc.nextLine();
+                        sistema.fechaValida(fecha);
 
-                    System.out.print("Correo: ");
-                    String correo = sc.nextLine();
+                        System.out.print("Hora inicio: ");
+                        int horaInicio = sc.nextInt();
 
-                    sistema.registrarProfesor(id, nombre, correo);
+                        System.out.print("Hora fin: ");
+                        int horaFin = sc.nextInt();
 
-                    System.out.println("Profesor registrado correctamente");
+                        System.out.print("Número de asistentes: ");
+                        int asistentes = sc.nextInt();
+                        sc.nextLine();
 
-                } catch (Exception e) {
+                        System.out.print("Código del salón: ");
+                        String codSalon = sc.nextLine();
 
-                    System.out.println("Error: " + e.getMessage());
-                }
+                        System.out.print("ID del profesor: ");
+                        String idProf = sc.nextLine();
 
-            }
-            else if (opcion == 3) {
+                        // Validación usando los métodos de búsqueda
+                        sistema.buscarSalonPorCodigo(codSalon);
+                        sistema.buscarProfesorPorID(idProf);
 
-                try {
+                        int idReserva = sistema.crearReserva(
+                                fecha, horaInicio, horaFin,
+                                asistentes, codSalon, idProf
+                        );
 
-                    System.out.print("Codigo salon: ");
-                    String codigoSalon = sc.nextLine();
+                        System.out.println("Reserva creada con ID: " + idReserva);
 
-                    Salon salon = sistema.buscarSalonPorCodigo(codigoSalon);
+                    } catch (FechaInvalidaException e) {
+                        System.out.println("Fecha inválida. Use formato YYYY-MM-DD.");
+                    } catch (HorarioInvalidoException e) {
+                        System.out.println("Horario inválido.");
+                    } catch (ReservaSolapadaException e) {
+                        System.out.println("Ya existe una reserva en ese horario.");
+                    } catch (CapacidadInvalidaException e) {
+                        System.out.println("El salón no tiene capacidad suficiente.");
+                    } catch (SalonNoExisteException e) {
+                        System.out.println("El salón no existe.");
+                    } catch (ProfesorNoExisteException e) {
+                        System.out.println("El profesor no existe.");
+                    } catch (ReservaDuplicadaException e) {
+                        System.out.println("La reserva ya existe.");
+                    } catch (CupoMaximoException e) {
+                        System.out.println("No se pueden crear más reservas.");
+                    }
+                    break;
 
-                    System.out.print("ID profesor: ");
-                    String idProfesor = sc.nextLine();
+                case 4:
+                    try {
+                        System.out.print("ID de la reserva: ");
+                        int idCancelar = sc.nextInt();
 
-                    Profesor profesor = sistema.buscarProfesorPorId(idProfesor);
+                        sistema.cancelarReserva(idCancelar);
+                        System.out.println("Reserva cancelada correctamente.");
 
-                    System.out.print("Fecha (YYYY-MM-DD): ");
-                    String fecha = sc.nextLine();
+                    } catch (ReservaNoExisteException e) {
+                        System.out.println("No existe una reserva con ese ID.");
+                    }
+                    break;
 
-                    System.out.print("Hora inicio: ");
-                    int horaInicio = sc.nextInt();
+                case 5:
+                    System.out.print("Ingrese fecha: ");
+                    String fechaConsulta = sc.nextLine();
+                    sistema.listarReservasPorFecha(fechaConsulta);
+                    break;
 
-                    System.out.print("Hora fin: ");
-                    int horaFin = sc.nextInt();
-
-                    System.out.print("Cantidad asistentes: ");
-                    int asistentes = sc.nextInt();
-                    sc.nextLine();
-
-                    int idReserva = sistema.crearReserva(
-                            fecha,
-                            horaInicio,
-                            horaFin,
-                            asistentes,
-                            codigoSalon,
-                            idProfesor
-                    );
-
-                    System.out.println("Reserva creada con ID: " + idReserva);
-
-                }
-                catch (SalonNoExisteException e) {
-
-                    System.out.println("El salon no existe");
-
-                }
-                catch (ProfesorNoExisteException e) {
-
-                    System.out.println("El profesor no existe");
-
-                }
-                catch (ReservaDuplicadaException |
-                       ReservaSolapadaException |
-                       HorarioInvalidoException |
-                       CapacidadInvalidaException |
-                       CupoMaximoException |
-                       FechaInvalidaException e) {
-
-                    System.out.println("Error: " + e.getMessage());
-                }
-
-            }
-            else if (opcion == 4) {
-
-                try {
-
-                    System.out.print("ID reserva: ");
-                    int id = sc.nextInt();
-                    sc.nextLine();
-
-                    sistema.cancelarReserva(id);
-
-                    System.out.println("Reserva cancelada");
-
-                }
-                catch (ReservaNoExisteException e) {
-
-                    System.out.println("Error: " + e.getMessage());
-                }
-
-            }
-            else if (opcion == 5) {
-
-                try {
-
+                case 6:
                     System.out.print("Fecha: ");
-                    String fecha = sc.nextLine();
-
-                    sistema.listarReservasPorFecha(fecha);
-
-                }
-                catch (FechaInvalidaException e) {
-
-                    System.out.println("Error: " + e.getMessage());
-                }
-
-            }
-            else if (opcion == 6) {
-
-                try {
-
-                    System.out.print("Fecha: ");
-                    String fecha = sc.nextLine();
+                    String fechaDisp = sc.nextLine();
 
                     System.out.print("Hora inicio: ");
                     int hi = sc.nextInt();
 
                     System.out.print("Hora fin: ");
                     int hf = sc.nextInt();
-                    sc.nextLine();
 
-                    sistema.mostrarSalonesDisponibles(fecha, hi, hf);
+                    sistema.mostrarSalonesDisponibles(fechaDisp, hi, hf);
+                    break;
 
-                }
-                catch (Exception e) {
+                case 7:
+                    try {
+                        System.out.print("Código del salón: ");
+                        String codigoBuscar = sc.nextLine();
 
-                    System.out.println("Error: " + e.getMessage());
-                }
+                        System.out.println(
+                                sistema.buscarSalonPorCodigo(codigoBuscar)
+                        );
 
+                    } catch (SalonNoExisteException e) {
+                        System.out.println("El salón no existe.");
+                    }
+                    break;
+
+                case 8:
+                    try {
+                        System.out.print("ID del profesor: ");
+                        String idBuscar = sc.nextLine();
+
+                        System.out.println(
+                                sistema.buscarProfesorPorID(idBuscar)
+                        );
+
+                    } catch (ProfesorNoExisteException e) {
+                        System.out.println("El profesor no existe.");
+                    }
+                    break;
+
+                case 0:
+                    System.out.println("Saliendo del sistema...");
+                    break;
+
+                default:
+                    System.out.println("Opción inválida.");
             }
-            else if (opcion == 7) {
 
-                System.out.println("Programa finalizado");
-
-            }
-            else {
-
-                System.out.println("Opcion invalida");
-            }
-        }
+        } while (opcion != 0);
 
         sc.close();
     }
