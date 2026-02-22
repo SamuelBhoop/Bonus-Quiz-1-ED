@@ -9,7 +9,13 @@ public class SistemaReservas {
     private int nReservas;
     private int consecutivoReserva;
 
-    public SistemaReservas() {
+    public SistemaReservas(int nSalones, int nProfesores, int nReservas) {
+        this.nSalones = nSalones;
+        this.nProfesores = nProfesores;
+        this.nReservas = nReservas;
+        this.salones = new Salon[nSalones];
+        this.profesores = new Profesor[nProfesores];
+        this.reservas = new Reserva[nReservas];
     }
     public void registrarSalon(String codigo,int capacidad, String ubicacion) throws SalonDuplicadoException, CapacidadInvalidaException {
         for(Salon salon:salones){
@@ -105,7 +111,7 @@ public class SistemaReservas {
     public void listarReservasPorFecha(String fecha){
         for(Reserva reserva:reservas) {
             if(reserva==null) continue;
-            if(reserva.getFecha().equals(fecha)) IO.println(reserva.toString());
+            if(reserva.getFecha().equals(fecha)) System.out.println(reserva.toString());
         }
     }
     public void mostrarSalonesDisponibles(String fecha, int horaInicio, int horaFin) {
@@ -122,7 +128,7 @@ public class SistemaReservas {
             }
 
             if (!ocupado) {
-                IO.println(salon.toString());
+                System.out.println(salon.toString());
             }
         }
     }
@@ -131,7 +137,7 @@ public class SistemaReservas {
             if (salon == null) continue;
             if(salon.getCodigo().equals(idSalon)) return salon;
         }
-        IO.println("no se encontro el salon");
+        System.out.println("no se encontro el salon");
         return null;
     }
     private Profesor buscarProfesorPorId(String idProfesor) {
@@ -139,7 +145,7 @@ public class SistemaReservas {
             if(profesor==null) continue;
             if(profesor.getId().equals(idProfesor)) return profesor;
         }
-        IO.println("no se encontro el profesor");
+        System.out.println("no se encontro el profesor");
         return null;
     }
 }
