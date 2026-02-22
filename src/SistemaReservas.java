@@ -1,198 +1,172 @@
 import excepciones.*;
-import java.util.Scanner;
 
-public class Main {
+public class SistemaReservas {
+    private Salon[] salones;
+    private int nSalones;
+    private Profesor[]  profesores;
+    private int nProfesores;
+    private Reserva[] reservas;
+    private int nReservas;
+    private int consecutivoReserva;
 
-    public static void main(String[] args) {
+    public SistemaReservas() {
+    }
+    public void registrarSalon(String codigo,int capacidad, String ubicacion) throws SalonDuplicadoException, CapacidadInvalidaException {
+        for(Salon salon:salones){
+            if(salon==null) continue;
 
-        Scanner sc = new Scanner(System.in);
-        SistemaReservas sistema = new SistemaReservas(50, 50, 50);
+            if(salon.getCodigo().equals(codigo)){
+                throw  new SalonDuplicadoException("Este salon ya existe");
+            }
+        }
+        if(capacidad<=0 || capacidad>30 || this.salones[nSalones-1]!=null){
+            throw  new CapacidadInvalidaException("Capacidad excedida o negativa");
+        }
+        for(Salon salon:salones){
+            if(salon==null){
+                salon = new Salon(codigo,capacidad,ubicacion);
+            break;
+            }
+        }
+    }
+    public void registrarProfesor(String id, String nombre, String correo)throws ProfesorDuplicadoException, CapacidadInvalidaException {
+        for(Profesor profesor:profesores){
+            if(profesor==null) continue;
+            if(profesor.getId().equals(id)){
+                throw new ProfesorDuplicadoException("Profesor ya existe");
+            }
+        }
+        if(profesores[nProfesores-1]!=null){
+            throw new CapacidadInvalidaException("se ha llegado al limite de profesores");
+        }
+        for (Profesor profesor:profesores){
+            if(profesor==null){
+                profesor  = new Profesor(id, nombre, correo);
+            break;
+            }
+        }
+    }
+    public int crearReserva(String fecha, int horaInicio, int horaFin, int asistentes, String codigoSalon, String idProfesor)throws ReservaSolapadaException, HorarioInvalidoException, CapacidadInvalidaException, SalonNoExisteException, ProfesorNoExisteException {
+        boolean existe = false;
+        int isalon = 0;
+        int iprofesor = 0;
+        int ireserva = 0;
+        for(int i=0;i<salones.length;i++) {
+            if (salones[i] == null) continue;
+            if (salones[i].getCodigo().equals(codigoSalon)) {
+                existe = true;
+                isalon = i;
+                break;
+            }
+        }
+        if(!existe) throw new SalonNoExisteException("el Salon no existe");
+        existe = false;
 
-        int opcion;
+        for(int i=0;i<profesores.length;i++) {
+            if (profesores[i] == null) continue;
+            if (profesores[i].getId().equals(idProfesor)) {
+                existe = true;
+                iprofesor = i;
+                break;
+            }
+        }
+        if(!existe) throw new ProfesorNoExisteException("el profesor no existe");
 
-        do {
-            System.out.println("\n===== SISTEMA DE RESERVAS =====");
-            System.out.println("1. Registrar salón");
-            System.out.println("2. Registrar profesor");
-            System.out.println("3. Crear reserva");
-            System.out.println("4. Cancelar reserva");
-            System.out.println("5. Listar reservas por fecha");
-            System.out.println("6. Mostrar salones disponibles");
-            System.out.println("7. Buscar salón por código");
-            System.out.println("8. Buscar profesor por ID");
-            System.out.println("0. Salir");
-            System.out.print("Seleccione una opción: ");
+        if(reservas[nReservas-1]!=null) throw  new CapacidadInvalidaException("Ya se alcanzo el maximo de reservas");
+        if(horaInicio<6||horaFin<7||horaInicio>19||horaFin>20) throw  new HorarioInvalidoException("Los horarios solo estan definidos de 6:00 am a 20:00 pm");
 
-            opcion = sc.nextInt();
-            sc.nextLine();
+        for(int i=0;i<reservas.length;i++) {
+            if(reservas[i]==null) {
+                reservas[i] = new Reserva(fecha, horaInicio, horaFin, asistentes, salones[isalon], profesores[iprofesor]);
+                for(Reserva reserva:reservas){
+                    if(reserva==null) continue;
+                    if(reserva.seCruzaCon(reservas[ireserva])) throw new ReservaSolapadaException("La reserva se cruza con otra reserva");
+                }
+                if(salones[isalon].getCapacidad()<reservas[i].getAsistentes())throw  new CapacidadInvalidaException("los asistentes no pueden superar la capacidad del salon");
+                ireserva = i;
+                break;
+            }
+        }
 
-            switch (opcion) {
+        return reservas[ireserva-1].getIdReserva();
+    }
 
-                case 1:
-                    try {
-                        System.out.print("Código del salón: ");
-                        String codigo = sc.nextLine();
+    public void cancelarReserva(int idReserva)throws ReservaNoExisteException {
+        for(int i=0;i<reservas.length;i++) {
+            if(reservas[i]==null) continue;
+            if(reservas[i].getIdReserva()==idReserva){
+                reservas[i]=null;
+                return;
+            }
+        }
+        throw new ReservaNoExisteException("ninguna reserva cuenta con el codigo ingresado");
+    }
 
-                        System.out.print("Capacidad: ");
-                        int capacidad = sc.nextInt();
-                        sc.nextLine();
-
-                        System.out.print("Ubicación: ");
-                        String ubicacion = sc.nextLine();
-
-                        sistema.registrarSalon(codigo, capacidad, ubicacion);
-                        System.out.println("Salón registrado correctamente.");
-
-                    } catch (SalonDuplicadoException e) {
-                        System.out.println("Ya existe un salón con ese código.");
-                    } catch (CupoMaximoException e) {
-                        System.out.println("No se pueden registrar más salones.");
-                    }
+    public void listarReservasPorFecha(String fecha){
+        for(Reserva reserva:reservas) {
+            if(reserva==null) continue;
+            if(reserva.getFecha().equals(fecha)) IO.println(reserva.toString());
+        }
+    }
+    public void mostrarSalonesDisponibles(String fecha, int horaInicio, int horaFin) {
+        boolean existe;
+        for (Salon salon : salones) {
+            if (salon == null) continue;
+            boolean ocupado = false;
+            for (Reserva reserva : reservas) {
+                if (reserva == null) continue;
+                if (reserva.getFecha().equals(fecha) && !(horaFin <= reserva.getHoraInicio() || horaInicio >= reserva.getHoraFin())) {
+                    ocupado = true;
                     break;
-
-                case 2:
-                    try {
-                        System.out.print("ID del profesor: ");
-                        String id = sc.nextLine();
-
-                        System.out.print("Nombre: ");
-                        String nombre = sc.nextLine();
-
-                        System.out.print("Correo: ");
-                        String correo = sc.nextLine();
-
-                        sistema.registrarProfesor(id, nombre, correo);
-                        System.out.println("Profesor registrado correctamente.");
-
-                    } catch (ProfesorDuplicadoException e) {
-                        System.out.println("Ese profesor ya está registrado.");
-                    } catch (CupoMaximoException e) {
-                        System.out.println("No se pueden registrar más profesores.");
-                    }
-                    break;
-
-                case 3:
-                    try {
-                        System.out.print("Fecha (YYYY-MM-DD): ");
-                        String fecha = sc.nextLine();
-
-                        sistema.fechaValida(fecha);
-                        
-                        System.out.print("Hora inicio: ");
-                        int horaInicio = sc.nextInt();
-
-                        System.out.print("Hora fin: ");
-                        int horaFin = sc.nextInt();
-
-                        System.out.print("Número de asistentes: ");
-                        int asistentes = sc.nextInt();
-                        sc.nextLine();
-
-                        System.out.print("Código del salón: ");
-                        String codSalon = sc.nextLine();
-
-                        System.out.print("ID del profesor: ");
-                        String idProf = sc.nextLine();
-
-                        sistema.buscarSalonPorCodigo(codSalon);
-                        sistema.buscarProfesorPorID(idProf);
-
-                        int idReserva = sistema.crearReserva(
-                                fecha, horaInicio, horaFin,
-                                asistentes, codSalon, idProf
-                        );
-
-                        System.out.println("Reserva creada con ID: " + idReserva);
-
-                    } catch (FechaInvalidaException e) {
-                        System.out.println("Fecha inválida. Use formato YYYY-MM-DD.");
-                    } catch (HorarioInvalidoException e) {
-                        System.out.println("Horario inválido.");
-                    } catch (ReservaSolapadaException e) {
-                        System.out.println("Ya existe una reserva en ese horario.");
-                    } catch (CapacidadInvalidaException e) {
-                        System.out.println("El salón no tiene capacidad suficiente.");
-                    } catch (SalonNoExisteException e) {
-                        System.out.println("El salón no existe.");
-                    } catch (ProfesorNoExisteException e) {
-                        System.out.println("El profesor no existe.");
-                    } catch (ReservaDuplicadaException e) {
-                        System.out.println("La reserva ya existe.");
-                    } catch (CupoMaximoException e) {
-                        System.out.println("No se pueden crear más reservas.");
-                    }
-                    break;
-
-                case 4:
-                    try {
-                        System.out.print("ID de la reserva: ");
-                        int idCancelar = sc.nextInt();
-
-                        sistema.cancelarReserva(idCancelar);
-                        System.out.println("Reserva cancelada correctamente.");
-
-                    } catch (ReservaNoExisteException e) {
-                        System.out.println("No existe una reserva con ese ID.");
-                    }
-                    break;
-
-                case 5:
-                    System.out.print("Ingrese fecha: ");
-                    String fechaConsulta = sc.nextLine();
-                    sistema.listarReservasPorFecha(fechaConsulta);
-                    break;
-
-                case 6:
-                    System.out.print("Fecha: ");
-                    String fechaDisp = sc.nextLine();
-
-                    System.out.print("Hora inicio: ");
-                    int hi = sc.nextInt();
-
-                    System.out.print("Hora fin: ");
-                    int hf = sc.nextInt();
-
-                    sistema.mostrarSalonesDisponibles(fechaDisp, hi, hf);
-                    break;
-
-                case 7:
-                    try {
-                        System.out.print("Código del salón: ");
-                        String codigoBuscar = sc.nextLine();
-
-                        System.out.println(
-                                sistema.buscarSalonPorCodigo(codigoBuscar)
-                        );
-
-                    } catch (SalonNoExisteException e) {
-                        System.out.println("El salón no existe.");
-                    }
-                    break;
-
-                case 8:
-                    try {
-                        System.out.print("ID del profesor: ");
-                        String idBuscar = sc.nextLine();
-
-                        System.out.println(
-                                sistema.buscarProfesorPorID(idBuscar)
-                        );
-
-                    } catch (ProfesorNoExisteException e) {
-                        System.out.println("El profesor no existe.");
-                    }
-                    break;
-
-                case 0:
-                    System.out.println("Saliendo del sistema...");
-                    break;
-
-                default:
-                    System.out.println("Opción inválida.");
+                }
             }
 
-        } while (opcion != 0);
-
-        sc.close();
+            if (!ocupado) {
+                IO.println(salon.toString());
+            }
+        }
     }
+    public Salon buscarSalonPorCodigo(String idSalon) {
+        for (Salon salon : salones) {
+            if (salon == null) continue;
+            if(salon.getCodigo().equals(idSalon)) return salon;
+        }
+        IO.println("no se encontro el salon");
+        return null;
+    }
+    public Profesor buscarProfesorPorId(String idProfesor) {
+        for (Profesor profesor : profesores) {
+            if(profesor==null) continue;
+            if(profesor.getId().equals(idProfesor)) return profesor;
+        }
+        IO.println("no se encontro el profesor");
+        return null;
+    }
+    public void fechaValida(String fecha) throws FechaInvalidaException {
+
+    if (fecha == null || fecha.isEmpty()) {
+        throw new FechaInvalidaException("La fecha no puede estar vacía.");
+    }
+
+    if (!fecha.matches("\\d{4}-\\d{2}-\\d{2}")) {
+        throw new FechaInvalidaException("Formato inválido. Use YYYY-MM-DD.");
+    }
+
+    String[] partes = fecha.split("-");
+    int año = Integer.parseInt(partes[0]);
+    int mes = Integer.parseInt(partes[1]);
+    int dia = Integer.parseInt(partes[2]);
+
+    if (mes < 1 || mes > 12) {
+        throw new FechaInvalidaException("Mes inválido.");
+    }
+
+    if (dia < 1 || dia > 31) {
+        throw new FechaInvalidaException("Día inválido.");
+    }
+
+    if (año < 1900) {
+        throw new FechaInvalidaException("Año inválido.");
+    }
+}
 }
